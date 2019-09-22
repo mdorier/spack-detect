@@ -28,3 +28,15 @@ class ExecutablePackage(BasePackage):
         stdout_value, stderr_value = proc.communicate()
         v = re.search(pkg.version_regex, stdout_value)
         return v.group()
+
+    @staticmethod
+    def path(pkg):
+        command = [ 'which', pkg.executable ]
+        proc = subprocess.Popen(command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT)
+        stdout_value, stderr_value = proc.communicate()
+        p = stdout_value.rstrip()
+        p = p.split('/bin/')
+        del p[-1]
+        return '/bin/'.join(p)

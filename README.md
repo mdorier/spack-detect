@@ -11,6 +11,8 @@ python setup.py install
 
 ### Using
 
+To generate `packages.yaml` in the current directory, use the following command.
+
 ```
-spack-detect -o packages.yaml
+spack-detect -o packages.yaml -v
 ```

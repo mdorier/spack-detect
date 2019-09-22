@@ -2,6 +2,8 @@ import importlib
 import inspect
 import os
 import glob
+import argparse
+import yaml
 from .PackageTypes import BasePackage
 from .util import package_name_from_class
 
@@ -63,9 +65,49 @@ def detect_version(package):
             pass
     return None
 
+def detect_path(package):
+    for base in package.__bases__:
+        try:
+            v = base.path(package)
+            return v
+        except Exception as e:
+            pass
+    return None
+
+
 def main():
-    for pkg in list_packages(os.path.dirname(__file__)+'/packages',
-            'spackdetect.packages',
-            base_class=BasePackage):
+    parser = argparse.ArgumentParser(description='Autodetection of system-provided Spack packages.')
+    parser.add_argument('-o', action='store', help='Output YAML file', required=True)
+    parser.add_argument('-v', action='store_true', help='Verbose standard output', default=False)
+    args = parser.parse_args()
+
+    verbose = args.v
+    output = args.o
+
+    packages = [ pkg for pkg in list_packages(os.path.dirname(__file__)+'/packages',
+                                    'spackdetect.packages',
+                                    base_class=BasePackage) ]
+    yaml_data = dict()
+    yaml_data['packages'] = dict()
+
+    for pkg in packages:
         pkg_name = package_name_from_class(pkg)
-        print('Package '+pkg_name+' version: '+str(detect_version(pkg)))
+        pkg_version = detect_version(pkg)
+        if(pkg_version is None):
+            if(verbose):
+                print('Package '+pkg_name+' not found on this system')
+            continue
+        pkg_path = detect_path(pkg)
+        p = { 'paths' : {
+                pkg_name+'@'+pkg_version : pkg_path
+                },
+              'buildable' : 'False'
+            }
+        yaml_data['packages'][pkg_name] = p
+        if(verbose):
+            print('Package '+pkg_name+' found, version '+pkg_version+' in '+pkg_path)
+
+    if(verbose):
+        print('Generating configuration in '+output)
+    with open(output,'w+') as f:
+        f.write(yaml.dump(yaml_data))

@@ -17,6 +17,7 @@ setup(
     author='Matthieu Dorier',  # Optional
     author_email='mdorier@anl.gov',  # Optional
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    install_requires=['PyYAML'],
     entry_points={  # Optional
         'console_scripts': [
             'spack-detect=spackdetect:main',
