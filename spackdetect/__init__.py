@@ -74,6 +74,14 @@ def detect_path(package):
             pass
     return None
 
+def print_red(msg):
+    print(u'\u001b[31m'+str(msg)+u'\u001b[0m')
+
+def print_yellow(msg):
+    print(u'\u001b[33m'+str(msg)+u'\u001b[0m')
+
+def print_green(msg):
+    print(u'\u001b[32m'+str(msg)+u'\u001b[0m')
 
 def main():
     parser = argparse.ArgumentParser(description='Autodetection of system-provided Spack packages.')
@@ -95,17 +103,17 @@ def main():
         pkg_version = detect_version(pkg)
         if(pkg_version is None):
             if(verbose):
-                print('Package '+pkg_name+' not found on this system')
+                print_yellow('Package '+pkg_name+' not found on this system')
             continue
         pkg_path = detect_path(pkg)
         p = { 'paths' : {
                 pkg_name+'@'+pkg_version : pkg_path
                 },
-              'buildable' : 'False'
+              'buildable' : False
             }
         yaml_data['packages'][pkg_name] = p
         if(verbose):
-            print('Package '+pkg_name+' found, version '+pkg_version+' in '+pkg_path)
+            print_green('Package '+pkg_name+' found, version '+pkg_version+' in '+pkg_path)
 
     if(verbose):
         print('Generating configuration in '+output)
