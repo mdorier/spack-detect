@@ -88,10 +88,26 @@ class HeaderPackage(BasePackage):
     locations.
     """
     __metaclass__ = HeaderPackageMeta
-    header_locations = {'/usr/include' : '/usr'}
+    header_locations = None
+
+    @staticmethod
+    def __get_default_header_locations():
+        if(HeaderPackage.header_locations is not None):
+            return
+        HeaderPackage.header_locations = dict()
+        p1 = subprocess.Popen(['echo'], stdout=subprocess.PIPE)
+        p2 = subprocess.Popen(['gcc', '-E', '-Wp,-v', '-'], stdin=p1.stdout, stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+        p1.stdout.close()
+        stdout_value, stderr_value = p2.communicate()
+        for line in stderr_value.split('\n'):
+            l = line.replace(' ','')
+            if l.startswith('/'):
+                HeaderPackage.header_locations[l] = '/usr'
 
     @staticmethod
     def __search_header_location(filename):
+        HeaderPackage.__get_default_header_locations()
         for loc in HeaderPackage.header_locations:
             if path.exists(loc + '/' + filename):
                 return loc
