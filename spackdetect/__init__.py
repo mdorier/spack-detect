@@ -99,7 +99,7 @@ def main():
     yaml_data['packages'] = dict()
 
     for pkg in packages:
-        pkg_name = package_name_from_class(pkg)
+        pkg_name = pkg.package_name
         pkg_version = detect_version(pkg)
         if(pkg_version is None):
             if(verbose):
