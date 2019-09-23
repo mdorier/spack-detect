@@ -1,5 +1,6 @@
 import subprocess
 import re
+from os import path
 from .util import package_name_from_class
 
 class BasePackage(object):
@@ -61,3 +62,61 @@ class ExecutablePackage(BasePackage):
         p = p.split('/bin/')
         del p[-1]
         return '/bin/'.join(p)
+
+
+class HeaderPackageMeta(type):
+    """
+    Metaclass for HeaderPackage. When creating a child class of HeaderPackage,
+    this metaclass will set the default package_name, header_file, version_macro fields.
+    """
+    def __new__(metaname, classname, baseclasses, attrs):
+        if not 'package_name' in attrs:
+            attrs['package_name'] = package_name_from_class(classname)
+        if not 'header_file' in attrs:
+            attrs['header_file'] = package_name_from_class(classname)+'.h'
+        if not 'version_macro' in attrs:
+            attrs['version_macro'] = classname.upper()+'_VERSION'
+        cls = type.__new__(metaname, classname, baseclasses, attrs)
+        return cls
+
+
+class HeaderPackage(BasePackage):
+    """
+    Packages deriving from HeaderPackage have a header file that can be
+    parsed to find out the version using preprocessor macros. It is assumed
+    that the path to such a header file can be found in gcc's default include
+    locations.
+    """
+    __metaclass__ = HeaderPackageMeta
+    header_locations = {'/usr/include' : '/usr'}
+
+    @staticmethod
+    def __search_header_location(filename):
+        for loc in HeaderPackage.header_locations:
+            if path.exists(loc + '/' + filename):
+                return loc
+        return None
+
+    @staticmethod
+    def __search_macro_value(filename, macroname):
+        with open(filename) as f:
+            for line in f:
+                if not '#define' in line:
+                    continue
+                definition = line.split(' ')
+                if definition[1] == macroname:
+                    v = definition[2].replace('"','').replace('\n','')
+                    return v
+        return None
+
+    @staticmethod
+    def version(pkg):
+        location = HeaderPackage.__search_header_location(pkg.header_file)
+        fullpath = location + '/' + pkg.header_file
+        v = HeaderPackage.__search_macro_value(fullpath, pkg.version_macro)
+        return v
+
+    @staticmethod
+    def path(pkg):
+        loc = HeaderPackage.__search_header_location(pkg.header_file)
+        return HeaderPackage.header_locations[loc]
