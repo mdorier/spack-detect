@@ -1,6 +1,7 @@
 import subprocess
 import re
 from os import path
+from six import with_metaclass
 from .util import package_name_from_class
 
 class BasePackage(object):
@@ -28,7 +29,7 @@ class ExecutablePackageMeta(type):
         cls = type.__new__(metaname, classname, baseclasses, attrs)
         return cls
 
-class ExecutablePackage(BasePackage):
+class ExecutablePackage(with_metaclass(ExecutablePackageMeta,BasePackage)):
     """
     Packages deriving from ExecutablePackage have an executable that can be called
     with an argument such as --version to get the version of the package. It is
@@ -38,8 +39,6 @@ class ExecutablePackage(BasePackage):
     and 'version_regex' fields.
     """
 
-    __metaclass__ = ExecutablePackageMeta
-
     @staticmethod
     def version(pkg):
         command = [ pkg.executable ]
@@ -48,7 +47,7 @@ class ExecutablePackage(BasePackage):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT)
         stdout_value, stderr_value = proc.communicate()
-        v = re.search(pkg.version_regex, stdout_value)
+        v = re.search(pkg.version_regex, str(stdout_value))
         return v.group()
 
     @staticmethod
@@ -58,7 +57,7 @@ class ExecutablePackage(BasePackage):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT)
         stdout_value, stderr_value = proc.communicate()
-        p = stdout_value.rstrip()
+        p = stdout_value.decode().rstrip()
         p = p.split('/bin/')
         del p[-1]
         return '/bin/'.join(p)
@@ -80,14 +79,13 @@ class HeaderPackageMeta(type):
         return cls
 
 
-class HeaderPackage(BasePackage):
+class HeaderPackage(with_metaclass(HeaderPackageMeta, BasePackage)):
     """
     Packages deriving from HeaderPackage have a header file that can be
     parsed to find out the version using preprocessor macros. It is assumed
     that the path to such a header file can be found in gcc's default include
     locations.
     """
-    __metaclass__ = HeaderPackageMeta
     header_locations = None
 
     @staticmethod
@@ -100,6 +98,7 @@ class HeaderPackage(BasePackage):
                 stderr=subprocess.PIPE)
         p1.stdout.close()
         stdout_value, stderr_value = p2.communicate()
+        stderr_value = stderr_value.decode()
         for line in stderr_value.split('\n'):
             l = line.replace(' ','')
             if l.startswith('/'):

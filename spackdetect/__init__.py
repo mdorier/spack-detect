@@ -113,7 +113,7 @@ def main():
             }
         yaml_data['packages'][pkg_name] = p
         if(verbose):
-            print_green('Package '+pkg_name+' found, version '+pkg_version+' in '+pkg_path)
+            print_green('Package '+str(pkg_name)+' found, version '+str(pkg_version)+' in '+str(pkg_path))
 
     if(verbose):
         print('Generating configuration in '+output)
