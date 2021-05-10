@@ -1,3 +1,9 @@
+IMPORTANT: as of May 2021, this project will no longer be maintained.
+To make spack detect existing external packages, please use
+[spack external find](https://spack.readthedocs.io/en/latest/build_settings.html?automatically-find-external-packages).
+
+# spack-detect
+
 This project provides utilities to detect system-provided packages
 and generate the YAML configurations for Spack.
 
